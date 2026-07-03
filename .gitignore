@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# ROS build artifacts
+ros_ws/build/
+ros_ws/devel/
+ros_ws/install/
+ros_ws/logs/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Large downloadable model files (see models/README.md)
+shape_predictor_68_face_landmarks.dat
+shape_predictor_68_face_landmarks_GTX.dat
+yolov4-tiny.weights
+
+# Reports are not part of the public repo
+*.docx
+*.pdf

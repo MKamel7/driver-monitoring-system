@@ -1,0 +1,8 @@
+<launch>
+	<!--node name="node_name" pkg="pkg_name" type="file_name.py" output="screen"/-->
+	<node name="open_camera" pkg="drowsiness_detection_pkg" type="camera_node.py" output="screen"/>
+	<node name="EAR" pkg="drowsiness_detection_pkg" type="EAR_node.py"/>
+	<node name="Pose_Estimation" pkg="drowsiness_detection_pkg" type="Pose_Estimation_node.py"/>
+	<node name="Result" pkg="drowsiness_detection_pkg" type="Result_node.py"/>
+
+</launch>

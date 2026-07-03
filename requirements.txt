@@ -1,0 +1,10 @@
+# Core detectors
+opencv-python>=4.8
+mediapipe>=0.10
+numpy>=1.24
+
+# Phone detection (custom YOLOv8 model)
+ultralytics>=8.0
+
+# Legacy dlib EAR variants only (alternatives/dlib_ear) — requires CMake + a C++ toolchain
+# dlib>=19.24
