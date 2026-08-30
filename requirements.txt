@@ -1,10 +1,28 @@
+# Pinned to a compatible range rather than left open.
+#
+# WHY. These were previously all lower bounds (">=4.8", ">=0.10", ">=8.0"), so
+# `pip install -r requirements.txt` resolved to whatever was current on the day
+# rather than to what this code was written against. MediaPipe changes its
+# solution APIs across minors, and Ultralytics has changed checkpoint internals
+# across majors, which matters here because models/yolov8m_custom.pt was
+# trained and exported against the version in use at the time. An unpinned
+# install is the most likely reason a fresh clone of this repository fails to
+# run, and it fails at load time with a confusing error rather than an obvious
+# one.
+#
+# The upper bounds below fence off the known-breaking direction (the next
+# major, or the next minor for MediaPipe). They are deliberately ranges and not
+# exact "==" pins: an exact pin should be taken from an environment where the
+# full pipeline has actually been run end to end against the bundled
+# checkpoint, and recorded here with the date it was verified.
+
 # Core detectors
-opencv-python>=4.8
-mediapipe>=0.10
-numpy>=1.24
+opencv-python>=4.8,<5.0
+mediapipe>=0.10,<0.11
+numpy>=1.24,<2.0        # MediaPipe and the bundled model predate the NumPy 2 ABI break
 
-# Phone detection (custom YOLOv8 model)
-ultralytics>=8.0
+# Phone detection (custom YOLOv8 model, models/yolov8m_custom.pt)
+ultralytics>=8.0,<9.0
 
-# Legacy dlib EAR variants only (alternatives/dlib_ear) — requires CMake + a C++ toolchain
-# dlib>=19.24
+# Legacy dlib EAR variants only (alternatives/dlib_ear) - requires CMake + a C++ toolchain
+# dlib>=19.24,<20.0
