@@ -78,10 +78,10 @@ tests/              unit tests for the decision logic (no deps, no weights)
 scripts/            fetch_models.py, smoke_import.py
 ros_ws/             ROS 1 package: camera → EAR + pose → fused result
 models/             checkpoints, fetched not tracked (see models/README.md)
-alternatives/       comparative studies: 3 dlib EAR variants, YOLOv4-tiny detection
+legacy/             the implementations as submitted, kept verbatim (see legacy/README.md)
 ```
 
-The `alternatives/` folder documents the evaluation that led to the final design — dlib (accurate, slow), a custom-trained dlib eye predictor (fast, less accurate), and MediaPipe (chosen: accurate *and* fast), plus a YOLOv4-tiny baseline that the custom YOLOv8 model replaced.
+The `legacy/` folder is the code as handed in, kept verbatim: it documents the evaluation that led to the final design — dlib (accurate, slow), a custom-trained dlib eye predictor (fast, less accurate), and MediaPipe (chosen: accurate *and* fast), plus a YOLOv4-tiny baseline that the custom YOLOv8 model replaced. [`legacy/README.md`](legacy/README.md) records exactly how the three dlib variants differ, including the one whose state machine is commented out so it reports drowsiness on a blink. They are preserved rather than merged, because a tidied artefact is no longer evidence of what was submitted.
 
 ## Reproducibility of the measured results
 

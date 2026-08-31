@@ -37,7 +37,7 @@ target-version = "py310"
 select = ["E", "F", "W", "I", "B", "UP"]
 
 [tool.ruff.lint.per-file-ignores]
-# alternatives/ holds the original submitted implementations, kept verbatim as
-# a record of what was handed in. They are not imported by src/ or apps/ and
-# they are deliberately not modernised.
-"alternatives/*" = ["E", "F", "W", "I", "B", "UP"]
+# legacy/ holds the original submitted implementations, kept verbatim as a
+# record of what was handed in. They are not imported by src/ or apps/ and
+# they are deliberately not modernised. See legacy/README.md.
+"legacy/*" = ["E", "F", "W", "I", "B", "UP"]

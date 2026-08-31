@@ -48,8 +48,8 @@ jobs:
 
       - run: pip install ruff==0.16.5
 
-      # Everything written in 2026 is linted. alternatives/ is excluded by a
-      # named rule in pyproject.toml, not by being left out of this command.
+      # Everything written in 2026 is linted. legacy/ is excluded by a named
+      # rule in pyproject.toml, not by being left out of this command.
       - run: ruff check src apps tests scripts
 
   import-smoke:
