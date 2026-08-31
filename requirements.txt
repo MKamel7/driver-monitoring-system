@@ -10,15 +10,24 @@
 # run, and it fails at load time with a confusing error rather than an obvious
 # one.
 #
-# The upper bounds below fence off the known-breaking direction (the next
-# major, or the next minor for MediaPipe). They are deliberately ranges and not
-# exact "==" pins: an exact pin should be taken from an environment where the
-# full pipeline has actually been run end to end against the bundled
-# checkpoint, and recorded here with the date it was verified.
+# The upper bounds below fence off the known-breaking direction. They are
+# deliberately ranges and not exact "==" pins: an exact pin should be taken
+# from an environment where the full pipeline has actually been run end to end
+# against the bundled checkpoint, and recorded here with the date it was
+# verified.
 
 # Core detectors
 opencv-python>=4.8,<5.0
-mediapipe>=0.10,<0.11
+
+# The bound here is NOT the next minor. MediaPipe removed the legacy
+# `mediapipe.solutions` API inside the 0.10 series: 0.10.21 still ships
+# mediapipe/python/solutions/face_mesh.py, 0.10.30 does not. Both detectors
+# in src/dms are built on mp.solutions.face_mesh, so "<0.11" resolved to
+# 0.10.35 and every fresh install crashed with
+#   AttributeError: module 'mediapipe' has no attribute 'solutions'
+# Caught by CI on 2026-08-31; wheel contents checked version by version.
+# Moving to the Tasks API is the real fix and is a separate piece of work.
+mediapipe>=0.10,<0.10.30
 numpy>=1.24,<2.0        # MediaPipe and the bundled model predate the NumPy 2 ABI break
 
 # Phone detection (custom YOLOv8 model, models/yolov8m_custom.pt)
