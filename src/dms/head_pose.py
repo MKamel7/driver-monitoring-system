@@ -18,23 +18,21 @@ import cv2
 import mediapipe as mp
 import numpy as np
 
+from .config import PoseConfig
+from .logic import classify_direction
+
 # Landmark indices used for pose: nose tip, eye corners, mouth corners, chin.
 POSE_LANDMARKS = [1, 33, 61, 199, 263, 291]
 
-
-class PoseConfig:
-    YAW_THRESHOLD_DEG = 15      # |yaw| beyond this counts as looking away
-    PITCH_DOWN_DEG = -15        # pitch below this counts as looking down
-    PITCH_UP_DEG = 20           # pitch above this counts as looking up
-    AWAY_FRAMES = 40            # consecutive away-frames before NOT FOCUSED
-    DROWSY_FRAMES = 40          # consecutive down-frames before Suspected Drowsiness
+__all__ = ["PoseConfig", "HeadPoseEstimator", "POSE_LANDMARKS"]
 
 
 class HeadPoseEstimator:
     """Stateful head-pose attention classifier."""
 
-    def __init__(self, config: PoseConfig = PoseConfig()):
-        self.config = config
+    def __init__(self, config: PoseConfig | None = None):
+        # One config per estimator; see the note in ear.py.
+        self.config = config if config is not None else PoseConfig()
         self.face_mesh = mp.solutions.face_mesh.FaceMesh(
             min_detection_confidence=0.7,
             min_tracking_confidence=0.7,
@@ -59,7 +57,7 @@ class HeadPoseEstimator:
             return frame_bgr, "No Driver", None
 
         pitch_deg, yaw_deg = self._angles(frame_bgr, results)
-        direction = self._direction(pitch_deg, yaw_deg)
+        direction = classify_direction(pitch_deg, yaw_deg, self.config)
         state = self._state(direction)
 
         if draw:
@@ -97,18 +95,6 @@ class HeadPoseEstimator:
         pitch_deg = angles[0] * 360
         yaw_deg = angles[1] * -360
         return pitch_deg, yaw_deg
-
-    def _direction(self, pitch_deg: float, yaw_deg: float) -> str:
-        c = self.config
-        if yaw_deg < -c.YAW_THRESHOLD_DEG:
-            return "Looking Left"
-        if yaw_deg > c.YAW_THRESHOLD_DEG:
-            return "Looking Right"
-        if pitch_deg < c.PITCH_DOWN_DEG:
-            return "Looking Down"
-        if pitch_deg > c.PITCH_UP_DEG:
-            return "Looking Up"
-        return "Forward"
 
     def _state(self, direction: str) -> str:
         if direction == "Forward":

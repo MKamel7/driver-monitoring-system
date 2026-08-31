@@ -9,13 +9,16 @@ on an NVIDIA Jetson Nano.
 
 Original EAR implementation: Mario Ezzat (graduation project team).
 Refactored 2026: module-level camera removed, landmark extraction
-de-duplicated, state machine made explicit.
+de-duplicated, state machine made explicit. The ratio, the calibration and
+the state machine now live in dms.logic so they can be tested without
+MediaPipe; this class holds the face mesh and the frame handling.
 """
-
-from math import dist
 
 import cv2
 import mediapipe as mp
+
+from .config import EarConfig
+from .logic import DrowsinessCounter, EarCalibrator, eye_aspect_ratio
 
 # MediaPipe Face Mesh landmark indices for the eye contours (16 points each).
 # Index layout is symmetric: [0] and [8] are the horizontal corners,
@@ -25,20 +28,17 @@ LEFT_EYE_LANDMARKS = [362, 382, 381, 380, 374, 373, 390, 249,
 RIGHT_EYE_LANDMARKS = [33, 7, 163, 144, 145, 153, 154, 155,
                        133, 173, 157, 158, 159, 160, 161, 246]
 
-
-class EarConfig:
-    """Tunable thresholds (ranges from the original thesis experiments)."""
-    N_INITIAL_FRAMES = 25       # frames used to calibrate the baseline EAR (20-40)
-    HOLDING_FRAMES = 20         # frames below threshold before "Drowsy" (20-40, FPS-dependent)
-    DROWSINESS_FACTOR = 0.75    # fraction of baseline EAR treated as "eye closing" (0.5-0.8)
-    MIN_VALID_EAR = 0.2         # EAR values below this are ignored during calibration (blinks)
+__all__ = ["EarConfig", "EarDetector",
+           "LEFT_EYE_LANDMARKS", "RIGHT_EYE_LANDMARKS"]
 
 
 class EarDetector:
     """Stateful per-driver EAR drowsiness detector."""
 
-    def __init__(self, config: EarConfig = EarConfig()):
-        self.config = config
+    def __init__(self, config: EarConfig | None = None):
+        # One config per detector. The previous default evaluated EarConfig()
+        # once at import, so every detector in a process shared one object.
+        self.config = config if config is not None else EarConfig()
         self.face_mesh = mp.solutions.face_mesh.FaceMesh(
             min_detection_confidence=0.7,
             min_tracking_confidence=0.7,
@@ -46,10 +46,13 @@ class EarDetector:
             max_num_faces=1,
             static_image_mode=False,
         )
-        self.initial_ear = 0.0
-        self._calibration_sum = 0.0
-        self._calibration_count = 0
-        self._drowsy_counter = 0
+        self._calibrator = EarCalibrator(config)
+        self._drowsy = DrowsinessCounter(config)
+
+    @property
+    def initial_ear(self) -> float:
+        """The calibrated baseline EAR, 0.0 until calibration finishes."""
+        return self._calibrator.initial_ear
 
     def process(self, frame_bgr):
         """Run one frame through the detector.
@@ -71,35 +74,10 @@ class EarDetector:
         right_eye = [(int(landmarks[i].x * w), int(landmarks[i].y * h))
                      for i in RIGHT_EYE_LANDMARKS]
 
-        avg_ear = self._ear(left_eye, right_eye)
+        avg_ear = eye_aspect_ratio(left_eye, right_eye)
 
-        if self.initial_ear == 0.0:
-            self._calibrate(avg_ear)
+        if not self._calibrator.calibrated:
+            self._calibrator.update(avg_ear)
             return frame_bgr, "Awake"
 
-        return frame_bgr, self._state(avg_ear)
-
-    def _ear(self, left_eye, right_eye) -> float:
-        left = dist(left_eye[12], left_eye[4]) / dist(left_eye[0], left_eye[8])
-        right = dist(right_eye[12], right_eye[4]) / dist(right_eye[0], right_eye[8])
-        return round((left + right) / 2.0, 2)
-
-    def _calibrate(self, avg_ear: float) -> None:
-        """Accumulate a baseline EAR, skipping blink frames."""
-        if self._calibration_count >= self.config.N_INITIAL_FRAMES:
-            self.initial_ear = round(
-                self._calibration_sum / self.config.N_INITIAL_FRAMES, 2)
-            self._calibration_sum = 0.0
-            self._calibration_count = 0
-        elif avg_ear > self.config.MIN_VALID_EAR:
-            self._calibration_sum += avg_ear
-            self._calibration_count += 1
-
-    def _state(self, avg_ear: float) -> str:
-        if avg_ear < self.initial_ear * self.config.DROWSINESS_FACTOR:
-            self._drowsy_counter += 1
-            if self._drowsy_counter > self.config.HOLDING_FRAMES:
-                return "Drowsy"
-            return "Awake"  # possibly just a blink
-        self._drowsy_counter = 0
-        return "Awake"
+        return frame_bgr, self._drowsy.update(avg_ear, self.initial_ear)
