@@ -132,6 +132,15 @@ Earlier fixes, from the original clean-up:
   truth-value error in the YOLOv8 demo as soon as two objects were detected.
 - Landmark extraction de-duplicated (16 hand-written tuples → index-list comprehensions).
 
+## Roadmap
+
+- **Build the evaluation.** The 97.47% and 97.8% figures cannot be regenerated from a checkout. Report sensitivity, specificity, **false alarms per hour**, detection latency and **subject-wise cross-validation**. Splitting by subject will probably lower the headline number, which is the point: a monitor that cries wolf twice an hour is unusable whatever its accuracy. For phone detection, precision and recall, confusion cases and latency at p50 and p95 alongside FPS.
+- **Port the detectors to the MediaPipe Tasks API.** `requirements.txt` is pinned below 0.10.30 because MediaPipe removed the legacy `mediapipe.solutions` API mid-series. The pin is a fence, not a fix.
+- **Fuse the three detectors into one state estimator** — eye closure, head pose and phone use into a temporal risk state with hysteresis: normal, distracted, drowsy, critical. Add PERCLOS, blink duration, gaze zone, yawning, face loss and night or IR conditions. That is what a real DMS is, and it turns three independent outputs into one defensible decision.
+- **Export to ONNX or TensorRT and benchmark on the Jetson**, which also puts a reproducible number behind the 18-20 FPS claim.
+
+Not doing: rewriting the submitted code into ROS 2 for fashion. `legacy/` is a dated artefact and its integrity is part of its value.
+
 ## Credits
 
 Graduation project — Mechatronics, Robotics & Automation Engineering, AASTMT Alexandria (2023). Built by the project team; this repository is maintained by [Mo Kamel](https://github.com/MKamel7).
