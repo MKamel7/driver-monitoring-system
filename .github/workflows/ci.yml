@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main, checkkk-fixes]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Tool versions are pinned here, not only in requirements.txt. An unpinned
+# linter or test runner turns "CI went red and nothing changed" into a
+# recurring mystery, because the rule set moved underneath the code.
+
+jobs:
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Deliberately does NOT install requirements.txt. dms.logic and
+      # dms.config have no third-party imports, so the decision logic is
+      # checked in seconds without OpenCV, MediaPipe or Torch. If this job
+      # ever needs the heavy wheels, the split has been broken.
+      # numpy is pinned to the same major the runtime uses, so the one test
+      # that exercises real array semantics tests what actually ships.
+      - name: Install test tooling only
+        run: pip install pytest==9.1.1 numpy==1.26.4
+
+      - name: Run tests
+        run: pytest
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install ruff==0.16.5
+
+      # Everything written in 2026 is linted. legacy/ is excluded by a named
+      # rule in pyproject.toml, not by being left out of this command.
+      - run: ruff check src apps tests scripts
+
+  import-smoke:
+    name: Import with real dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # This job is what proves the bounds in requirements.txt actually
+      # resolve, and that the detector modules still import once OpenCV,
+      # MediaPipe and Ultralytics are really present.
+      - name: Install runtime dependencies
+        run: pip install -r requirements.txt
+
+      - name: Import every module and build the two model-free detectors
+        run: python scripts/smoke_import.py

@@ -15,7 +15,10 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 
-PHONE_CLASS_ID = 0  # the custom model has a single class: phone
+from .config import PHONE_CLASS_ID
+from .logic import filter_phone_boxes
+
+__all__ = ["PhoneDetector", "PHONE_CLASS_ID"]
 
 
 class PhoneDetector:
@@ -34,8 +37,7 @@ class PhoneDetector:
         boxes = np.array(result.boxes.xyxy.cpu(), dtype=int)
         classes = np.array(result.boxes.cls.cpu(), dtype=int)
 
-        phone_boxes = [box for cls, box in zip(classes, boxes)
-                       if cls == PHONE_CLASS_ID]
+        phone_boxes = filter_phone_boxes(classes, boxes, PHONE_CLASS_ID)
 
         if draw:
             for (x1, y1, x2, y2) in phone_boxes:

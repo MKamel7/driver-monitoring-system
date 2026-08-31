@@ -16,10 +16,18 @@ ros_ws/logs/
 Thumbs.db
 .DS_Store
 
-# Large downloadable model files (see models/README.md)
+# Model checkpoints (see models/README.md). None are tracked: the two custom
+# ones are Release assets fetched by scripts/fetch_models.py, the rest are
+# public downloads.
+eye_predictor.dat
+yolov8m_custom.pt
 shape_predictor_68_face_landmarks.dat
 shape_predictor_68_face_landmarks_GTX.dat
 yolov4-tiny.weights
+
+# Test scratch
+.pytest_cache/
+.ruff_cache/
 
 # Reports are not part of the public repo
 *.docx

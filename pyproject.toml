@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dms"
+version = "1.0.0"
+description = "Driver Monitoring System — drowsiness, attention and phone-usage detection"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+
+# Runtime dependencies are deliberately NOT listed here. They live in
+# requirements.txt with the reasoning for each bound, and the detectors need
+# native wheels (OpenCV, MediaPipe, Torch via Ultralytics) that are chosen per
+# platform. `pip install -e .` gives you the package; `pip install -r
+# requirements.txt` gives you the things it imports.
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+# No blanket exclusions. A check that does not run is worse than no check,
+# so if something here should not be linted it gets a named, justified
+# per-file ignore below rather than disappearing from the run.
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# legacy/ holds the original submitted implementations, kept verbatim as a
+# record of what was handed in. They are not imported by src/ or apps/ and
+# they are deliberately not modernised. See legacy/README.md.
+"legacy/*" = ["E", "F", "W", "I", "B", "UP"]
